@@ -21,11 +21,15 @@ TEBrowser is similar to a traditional genome browser, but instead of using a ref
 
 ## Installation
 
+```bash
+git clone git@github.com:Dfam-consortium/DfamTEBrowser.git
+cd DfamTEBrowser
 git submodule init
 git submodule update
 cd igv.js
 npm install
 npm run build
+```
 
 ## Usage
 
@@ -33,18 +37,24 @@ Generate a TEBrowser visualization using the `genTEBrowser.pl` script:
 
 ### From a consensus sequence:
 ```bash
-perl genTEBrowser.pl -consensus your_te_consensus.fasta [options]
+perl genTEBrowser.pl your_te_consensus.fasta [options]
 ```
 
 ### From a Stockholm alignment:
 ```bash
-perl genTEBrowser.pl -stockholm your_te_alignment.sto [options]
+perl genTEBrowser.pl your_te_alignment.stk [options]
+```
+
+### Given a Dfam accession:
+```bash
+perl genTEBrowser.pl DF000000001 [options]
 ```
 
 ## Input Formats
 
 - **Consensus sequences**: FASTA format containing the TE family consensus sequence
 - **Stockholm files**: Multiple sequence alignment format representing aligned instances from the TE family
+- **Dfam accession**: Directly fetches the TE family data from the Dfam database using the provided accession number
 
 ## Output
 
