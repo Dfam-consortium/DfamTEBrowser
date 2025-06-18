@@ -1,17 +1,15 @@
 #!/usr/local/bin/perl
 use strict;
 use warnings;
+use FindBin;
 use Data::Dumper;
 use File::Path qw(make_path);
 use File::Copy qw(copy);
 
+my $RMLib      = "$FindBin::Bin/../Libraries/RepeatMaskerLib.embl";
+
 ### Configurations ###
 my $public_html     = "/home/rhubley/public_html";
-my $defaultHTML     = "$public_html/default.html";
-my $defaultRef      = "$public_html/ref.fa";
-my $CRAMFile        = "$public_html/seed.cram";
-my $CRAMFileIndex   = "$public_html/seed.cram.crai";
-my $STKTOSAM        = "/home/rhubley/scripts/stkToSam.py";
 my $SAMTOOLS        = "/usr/local/samtools/bin/samtools";
 my $RMBLASTN        = "/usr/local/rmblast-2.14.1/bin/rmblastn";
 my $BLASTX          = "/usr/local/rmblast-2.14.1/bin/blastx";
@@ -21,32 +19,28 @@ my $dbProtFile      = "/usr/local/RepeatMasker/Libraries/RepeatPeps.lib";
 my $MAX_TRACK_DEPTH = 10;
 $ENV{"BLASTMAT"}    = "/home/rhubley/projects/RepeatModeler/Matrices/ncbi/nt";
 my @distinctColors = generate_color_palette();
+my $igv_source_url = "./igv.esm.min.js";
+
+# Paths to resources in this script's project directory
+my $STKTOSAM        = "$FindBin::Bin/stkToSam.py";
+my $igv_source_file = "$FindBin::Bin/igv.js/dist/igv.esm.min.js";
 
 # --- FREEZE MOD: Parse -freeze <name> from command line ---
-my $freeze_dir;
-my $freeze_name;
-my $outputHTML = $defaultHTML;
-my $outputRef  = $defaultRef;
-my $outputCRAM = $CRAMFile;
-my $outputCRAI = $CRAMFileIndex;
-my $outputIGV  = "";
-my $igv_source = "https://www.repeatmasker.org/~rhubley/igv/dist/igv.esm.min.js";
-
-if (@ARGV && $ARGV[0] eq '-freeze') {
+my $freeze_name = "default";
+if (@ARGV && $ARGV[0] eq '-outdir') {
     shift @ARGV;
-    $freeze_name = shift @ARGV or die "Usage: $0 -freeze <name> <sequence file> | DF#########\n";
-    $freeze_dir = "$public_html/$freeze_name";
-    make_path($freeze_dir) unless -d $freeze_dir;
-    $outputHTML = "$freeze_dir/index.html";
-    $outputRef  = "$freeze_dir/ref.fa";
-    $outputCRAM = "$freeze_dir/seed.cram";
-    $outputCRAI = "$freeze_dir/seed.cram.crai";
-    $outputIGV  = "$freeze_dir/igv.esm.min.js";
-    # Copy IGV JS
-    my $igv_js_src = glob("/home/rhubley/projects/IGV/bigPSL/igv.js/dist/igv.esm.min.js");
-    copy($igv_js_src, $outputIGV) or die "Failed to copy IGV JS ($igv_js_src to $outputIGV): $!\n";
-    $igv_source = "./igv.esm.min.js";
+    $freeze_name = shift @ARGV or die "Usage: $0 -outdir <name> <sequence file> | DF#########\n";
 }
+
+my $freeze_dir = "$public_html/$freeze_name";
+make_path($freeze_dir) unless -d $freeze_dir;
+my $outputHTML = "$freeze_dir/index.html";
+my $outputRef  = "$freeze_dir/ref.fa";
+my $outputCRAM = "$freeze_dir/seed.cram";
+my $outputCRAI = "$freeze_dir/seed.cram.crai";
+my $outputIGV  = "$freeze_dir/igv.esm.min.js";
+# Copy IGV JS
+copy(glob($igv_source_file), $outputIGV) or die "Failed to copy IGV JS ($igv_source_file to $outputIGV): $!\n";
 
 ### Main Execution ###
 my $seqFile = shift or die "Usage: $0 <sequence file> | DF#########\n";
@@ -60,15 +54,14 @@ my %annotations = (
 );
 
 # --- FREEZE MOD: Pass output file destinations and igv_source ---
-generate_html($seqID, $finalSeqFile, \%annotations, $hasSeed, $outputHTML, $outputRef, $outputCRAM, $outputCRAI, $igv_source);
+generate_html($seqID, $finalSeqFile, \%annotations, $hasSeed, $outputHTML, $outputRef, $outputCRAM, $outputCRAI, $igv_source_url);
 
 print "Annotation complete. ";
-if ($freeze_dir) {
-    print "See $outputHTML or http://www.repeatmasker.org/~rhubley/$freeze_name/index.html\n";
-} else {
-    print "See $defaultHTML or http://www.repeatmasker.org/~rhubley/default.html\n";
-}
+print "See $outputHTML or http://www.repeatmasker.org/~rhubley/$freeze_name/index.html\n";
 
+unlink("out.sam") if ( -e "out.sam");
+unlink("tmpAnnotSeqDfamCons.fa") if ( -e "tmpAnnotSeqDfamCons.fa" );
+unlink("tmpAnnotSeqDfamSeed.stk") if ( -e "tmpAnnotSeqDfamSeed.stk" );
 
 
 ### Subroutines ###
