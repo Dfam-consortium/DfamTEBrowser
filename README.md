@@ -13,10 +13,11 @@ protein alignments, and ChIP-seq datasets for KRAB Zinc Finger Proteins (KZNFs).
 DfamTEBrowser extends this foundation by developing a standalone viewer with enhanced 
 visualization tracks that provide clearer representation of inter- and intra-family relationships, 
 seed alignments, and detailed protein alignment information.  In addition, DfamTEBrowser 
-builds upon a extensible visualization framework (IGV.js) that allows for the further addition 
+builds upon a extensible visualization framework (IGV.js [2]) that allows for the further addition 
 of custom tracks and data types.
 
 1. Fernandes, Jason D., et al. "The UCSC repeat browser allows discovery and visualization of evolutionary conflict across repeat families." Mobile DNA 11 (2020): 1-12. ( https://repeatbrowser.ucsc.edu )
+2. James T Robinson, Helga Thorvaldsdottir, Douglass Turner, Jill P Mesirov, igv.js: an embeddable JavaScript implementation of the Integrative Genomics Viewer (IGV), Bioinformatics, Volume 39, Issue 1, January 2023, btac830, https://doi.org/10.1093/bioinformatics/btac830
 
 
 ## Features
