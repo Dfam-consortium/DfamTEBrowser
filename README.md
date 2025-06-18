@@ -21,7 +21,11 @@ TEBrowser is similar to a traditional genome browser, but instead of using a ref
 
 ## Installation
 
-[Installation instructions to be added]
+git submodule init
+git submodule update
+cd igv.js
+npm install
+npm run build
 
 ## Usage
 
