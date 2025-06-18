@@ -1,4 +1,4 @@
-# TEBrowser
+# DfamTEBrowser
 
 Transposable Element Family Genome Browser
 
@@ -6,7 +6,7 @@ A web-based visualization tool for transposable element (TE) sequences that prov
 
 ## Overview
 
-TEBrowser is similar to a traditional genome browser, but instead of using a reference genome, it uses transposable element family consensus sequences or Stockholm alignment files as the reference. The tool displays multiple tracks showing various characteristics across the TE reference sequence, making it both a powerful reference visualization and a useful tool for curation of putative TE families.
+DfamTEBrowser is similar to a traditional genome browser, but instead of using a reference genome, it uses transposable element family consensus sequences or Stockholm alignment files as the reference. The tool displays multiple tracks showing various characteristics across the TE reference sequence, making it both a powerful reference visualization and a useful tool for curation of putative TE families.
 
 ## Features
 
@@ -33,7 +33,7 @@ npm run build
 
 ## Usage
 
-Generate a TEBrowser visualization using the `genTEBrowser.pl` script:
+Generate a DfamTEBrowser visualization using the `genTEBrowser.pl` script:
 
 ### From a consensus sequence:
 ```bash
@@ -62,7 +62,7 @@ The tool generates web-based visualization files that can be opened in a browser
 
 ## Technology
 
-TEBrowser is built on:
+DfamTEBrowser is built on:
 - **IGV.js** - Core genome browser functionality
 - **Custom tracks** - Specialized tracks for TE-specific data visualization
 - **Perl** - Backend processing and file generation
@@ -74,14 +74,6 @@ TEBrowser is built on:
 - **Comparative analysis**: Compare alignments and similarities across different TE families
 - **Research**: Investigate transposable element biology and evolution
 
-## Contributing
-
-[Contributing guidelines to be added]
-
 ## License
 
-[License information to be added]
-
-## Support
-
-[Contact/support information to be added]
+CC0 1.0 Universal
