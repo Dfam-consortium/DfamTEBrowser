@@ -62,6 +62,7 @@ my %annotations = (
 );
 generate_html($seqID, $finalSeqFile, \%annotations, $hasSeed, $outputHTML, $outputRef, $outputCRAM, $outputCRAI, $igv_source_url);
 
+print "\n\n";
 print "Annotation complete. ";
 print "See $outputHTML or $public_html_url/$freeze_name/index.html\n";
 
