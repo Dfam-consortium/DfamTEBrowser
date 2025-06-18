@@ -11,7 +11,9 @@ if ( ! -e $ENV{"HOME"} ) {
 }
 
 ### Configurations ###
-my $public_html     = "$ENV{'HOME'}/public_html";
+my $public_html_dir     = "$ENV{'HOME'}/public_html";
+my $public_html_url = "http://www.repeatmasker.org/~$ENV{'USER'}";
+my $REPEATMODELER_DIR = "/home/rhubley/projects/RepeatModeler";
 my $REPEATMASKER_DIR= "/home/rhubley/projects/RepeatMasker";
 my $RMBLAST_DIR     = "/usr/local/rmblast-2.14.1";
 my $SAMTOOLS        = "/usr/local/samtools/bin/samtools";
@@ -21,7 +23,7 @@ my $MAX_TRACK_DEPTH = 10;
 ## Derived paths and environment variables
 my $dbFile          = "$REPEATMASKER_DIR/Libraries/RepeatMasker.lib";
 my $dbProtFile      = "$REPEATMASKER_DIR/Libraries/RepeatPeps.lib";
-$ENV{"BLASTMAT"}    = "/home/rhubley/projects/RepeatModeler/Matrices/ncbi/nt";
+$ENV{"BLASTMAT"}    = "$REPEATMODELER_DIR/Matrices/ncbi/nt";
 my @distinctColors = generate_color_palette();
 my $igv_source_url = "./igv.esm.min.js";
 my $RMBLASTN        = "$RMBLAST_DIR/bin/rmblastn";
@@ -36,7 +38,7 @@ if (@ARGV && $ARGV[0] eq '-outdir') {
     $freeze_name = shift @ARGV or die "Usage: $0 -outdir <name> <sequence file> | DF#########\n";
 }
 
-my $freeze_dir = "$public_html/$freeze_name";
+my $freeze_dir = "$public_html_dir/$freeze_name";
 make_path($freeze_dir) unless -d $freeze_dir;
 my $outputHTML = "$freeze_dir/index.html";
 my $outputRef  = "$freeze_dir/ref.fa";
@@ -61,7 +63,7 @@ my %annotations = (
 generate_html($seqID, $finalSeqFile, \%annotations, $hasSeed, $outputHTML, $outputRef, $outputCRAM, $outputCRAI, $igv_source_url);
 
 print "Annotation complete. ";
-print "See $outputHTML or http://www.repeatmasker.org/~rhubley/$freeze_name/index.html\n";
+print "See $outputHTML or $public_html_url/$freeze_name/index.html\n";
 
 unlink("out.sam") if ( -e "out.sam");
 unlink("tmpAnnotSeqDfamCons.fa") if ( -e "tmpAnnotSeqDfamCons.fa" );
@@ -525,7 +527,7 @@ sub prepare_sequence {
         if ( $RF =~ /^[\.Xx]+$/ ) {
           # No consensus, must run Linup
           print "fixing stockholm file for $file\n";
-          system("/home/rhubley/projects/RepeatModeler/util/Linup -stockholm tmpAnnotSeqDfamSeed.stk > tmpFixed.stk");
+          system("$REPEATMODELER_DIR/util/Linup -stockholm tmpAnnotSeqDfamSeed.stk > tmpFixed.stk");
           system("mv tmpFixed.stk tmpAnnotSeqDfamSeed.stk");
         }
         $stkFile = "tmpAnnotSeqDfamSeed.stk";
