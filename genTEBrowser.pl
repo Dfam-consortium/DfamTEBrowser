@@ -6,22 +6,26 @@ use Data::Dumper;
 use File::Path qw(make_path);
 use File::Copy qw(copy);
 
-my $RMLib      = "$FindBin::Bin/../Libraries/RepeatMaskerLib.embl";
+if ( ! -e $ENV{"HOME"} ) {
+  die "Could not identify the path to your home directory from the 'HOME' environment variable.\n";
+}
 
 ### Configurations ###
-my $public_html     = "/home/rhubley/public_html";
+my $public_html     = "$ENV{'HOME'}/public_html";
+my $REPEATMASKER_DIR= "/home/rhubley/projects/RepeatMasker";
+my $RMBLAST_DIR     = "/usr/local/rmblast-2.14.1";
 my $SAMTOOLS        = "/usr/local/samtools/bin/samtools";
-my $RMBLASTN        = "/usr/local/rmblast-2.14.1/bin/rmblastn";
-my $BLASTX          = "/usr/local/rmblast-2.14.1/bin/blastx";
 my $ULTRA           = "/usr/local/ultra/ultra";
-my $dbFile          = "/home/rhubley/projects/RepeatMasker/Libraries/RepeatMasker.lib";
-my $dbProtFile      = "/usr/local/RepeatMasker/Libraries/RepeatPeps.lib";
 my $MAX_TRACK_DEPTH = 10;
+
+## Derived paths and environment variables
+my $dbFile          = "$REPEATMASKER_DIR/Libraries/RepeatMasker.lib";
+my $dbProtFile      = "$REPEATMASKER_DIR/Libraries/RepeatPeps.lib";
 $ENV{"BLASTMAT"}    = "/home/rhubley/projects/RepeatModeler/Matrices/ncbi/nt";
 my @distinctColors = generate_color_palette();
 my $igv_source_url = "./igv.esm.min.js";
-
-# Paths to resources in this script's project directory
+my $RMBLASTN        = "$RMBLAST_DIR/bin/rmblastn";
+my $BLASTX          = "$RMBLAST_DIR/bin/blastx";
 my $STKTOSAM        = "$FindBin::Bin/stkToSam.py";
 my $igv_source_file = "$FindBin::Bin/igv.js/dist/igv.esm.min.js";
 
@@ -43,6 +47,8 @@ my $outputIGV  = "$freeze_dir/igv.esm.min.js";
 copy(glob($igv_source_file), $outputIGV) or die "Failed to copy IGV JS ($igv_source_file to $outputIGV): $!\n";
 
 ### Main Execution ###
+print "#\n# GenTEBrowser - Generate Dfam TE Browser\n#\n";
+
 my $seqFile = shift or die "Usage: $0 <sequence file> | DF#########\n";
 my ($seqID, $hasSeed, $finalSeqFile) = prepare_sequence($seqFile);
 
@@ -52,8 +58,6 @@ my %annotations = (
     'protein' => run_protein_alignment($finalSeqFile),
     'ultra'   => run_ultra_annotation($finalSeqFile),
 );
-
-# --- FREEZE MOD: Pass output file destinations and igv_source ---
 generate_html($seqID, $finalSeqFile, \%annotations, $hasSeed, $outputHTML, $outputRef, $outputCRAM, $outputCRAI, $igv_source_url);
 
 print "Annotation complete. ";
