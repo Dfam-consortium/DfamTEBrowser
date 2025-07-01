@@ -63,8 +63,9 @@ my %annotations = (
 generate_html($seqID, $finalSeqFile, \%annotations, $hasSeed, $outputHTML, $outputRef, $outputCRAM, $outputCRAI, $igv_source_url);
 
 print "\n\n";
-print "Annotation complete. ";
-print "See $outputHTML or $public_html_url/$freeze_name/index.html\n";
+print "## Annotation complete.\n";
+print "## See $outputHTML or $public_html_url/$freeze_name/index.html\n";
+print "##\n\n";
 
 unlink("out.sam") if ( -e "out.sam");
 unlink("tmpAnnotSeqDfamCons.fa") if ( -e "tmpAnnotSeqDfamCons.fa" );
@@ -515,8 +516,14 @@ sub prepare_sequence {
     if ( ! -s $file && $file =~ /^D[FR]\d{9}$/ ) {
         system("wget \"https://www.dfam.org/api/families/$file/seed?format=stockholm\" -O tmpAnnotSeqDfamSeed.stk > /dev/null 2>&1");
         die "Failed to download seed for $file\n" unless -s "tmpAnnotSeqDfamSeed.stk";
+        $stkFile = "tmpAnnotSeqDfamSeed.stk";
+    }elsif ( $file =~ /\.stk$/ ) {
+        $stkFile = "tmpAnnotSeqDfamSeed.stk";
+        system("cp $file tmpAnnotSeqDfamSeed.stk");
+    }
 
-        open STK,"<tmpAnnotSeqDfamSeed.stk" or die "Can't open tmpAnnotSeqDfamSeed.stk\n";
+    if ( $stkFile ) {
+        open STK,"<$stkFile" or die "Can't open $stkFile\n";
         my $RF = "";
         while (<STK>) {
           if ( /^#=GC\s+RF\s+(\S+)/ ) {
@@ -528,15 +535,9 @@ sub prepare_sequence {
         if ( $RF =~ /^[\.Xx]+$/ ) {
           # No consensus, must run Linup
           print "fixing stockholm file for $file\n";
-          system("$REPEATMODELER_DIR/util/Linup -stockholm tmpAnnotSeqDfamSeed.stk > tmpFixed.stk");
-          system("mv tmpFixed.stk tmpAnnotSeqDfamSeed.stk");
+          system("$REPEATMODELER_DIR/util/Linup -stockholm $stkFile > tmpFixed.stk");
+          system("mv tmpFixed.stk $stkFile");
         }
-        $stkFile = "tmpAnnotSeqDfamSeed.stk";
-    }elsif ( $file =~ /\.stk$/ ) {
-        $stkFile = $file;
-    }
-
-    if ( $stkFile ) {
 
         print "Running $STKTOSAM $stkFile\n";
         system("$STKTOSAM $stkFile");
