@@ -275,6 +275,13 @@ def main():
         config.read(args.config)
 
     install_dir = os.path.dirname(os.path.abspath(__file__))
+    if not os.path.exists(os.path.join(install_dir, "DfamLib", "Dfam-curated.fa")):
+        print("Please finish installation of DfamTEBrowser by downloading the DfamLib/Dfam-curated.fa file (see README.md).")
+        sys.exit(1)
+    if not os.path.exists(os.path.join(install_dir, "DfamLib", "RepeatPeps.lib")):
+        print("Please finish installation of DfamTEBrowser by downloading the DfamLib/RepeatPeps.lib file (see README.md).")
+        sys.exit(1)
+
     matrix_dir = os.path.join(install_dir, "Matrices/ncbi/nt")
     rmblast_dir =     os.environ.get('RMBLAST_DIR') \
                   or (config.get('tools', 'RMBLAST_DIR', fallback=None) if config else None) \
