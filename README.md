@@ -47,8 +47,8 @@ pip3 install numpy
 git clone git@github.com:Dfam-consortium/DfamTEBrowser.git
 cd DfamTEBrowser
 cd Libraries
-wget https://www.dfam.org/releases/current/families/Dfam-RepeatMasker.lib.gz -o Dfam-curated.fa.gz
-wget https://www.dfam.org/releases/current/families/RepeatPeps.lib.gz -o RepeatPeps.lib.gz
+wget https://www.dfam.org/releases/current/families/Dfam-RepeatMasker.lib.gz -O Dfam-curated.fa.gz
+wget https://www.dfam.org/releases/current/families/RepeatPeps.lib.gz 
 gunzip Dfam-curated.fa.gz
 gunzip RepeatPeps.lib.gz
 ```
