@@ -67,6 +67,15 @@ npm run build
 cp dist/igv.esm.min.js ../js/igv.esm.min.js
 ```
 
+## Configuration
+
+DfamTEBrowser can be configured one of three ways (in priority order):
+
+  1. Using command line options to specify tool dependency locations and other parameters.
+  2. Using environment variables to set dependency locations.
+  3. Using a config file in INI format (specfied with -config <filename>)
+  4. Using your PATH to automatically locate tools.
+
 ## Usage
 
 Generate a DfamTEBrowser visualization using the `genTEBrowser.pl` script:
