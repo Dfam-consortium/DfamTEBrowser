@@ -1,23 +1,8 @@
 #!/usr/bin/env python3
 """
-sto2sam_minimal.py
+stkToSam.py
 ==================
-
-Convert a Stockholm multiple‑sequence alignment (MSA) to a SAM file plus an
-ungapped reference FASTA, *without any external libraries*.
-
-Algorithm highlights
---------------------
-1. Build the reference from the #=GC RF line(s), stripping '.' and '-'.
-2. For each alignment row:
-   •   Find the first column where the row contains a real base (not '.'/'-').
-   •   Compute the SAM `POS` (1‑based reference coordinate) for that column.
-   •   Emit the CIGAR string **starting at that column**, so it never begins
-       with a 'D'.  Subsequent deletions are legal and kept.
-   •   Remove '.' and '-' from the sequence before writing the `SEQ` field.
-3. Write `ref.fa` and `out.sam`; compress with samtools:
-
-       samtools view -C --write-index -T ref.fa -o out.cram out.sam
+Convert a Stockholm multiple-sequence alignment (MSA) to a SAM file and ungapped reference FASTA, *without any external libraries*.
 """
 
 import sys
@@ -39,46 +24,6 @@ def collapse_ops(ops):
         else:
             out.append([op, 1])
     return out
-
-
-def cigar_and_pos_old(ref_cols, seq_cols):
-    """
-    Build CIGAR and starting reference position for one sequence row.
-
-    Returns (cigar_tuples, pos) or (None, None) if the sequence is all gaps.
-    `pos` is 1‑based to drop straight into the SAM record.
-    """
-    ops = []
-    ref_coord = 0          # counts reference bases seen (0‑based internally)
-    started   = False
-    pos       = None
-
-    for r, q in zip(ref_cols, seq_cols):
-        ref_has = r not in ".-"
-        seq_has = q not in ".-"
-
-        if ref_has:
-            ref_coord += 1
-
-        if not started:
-            if not seq_has:          # still in the leading gap—skip
-                continue
-            # first read base → set POS
-            started = True
-            pos = ref_coord if ref_has else ref_coord + 1
-
-        # after start → emit CIGAR op for this column
-        if ref_has and seq_has:          # match/mismatch
-            ops.append("M")
-        elif ref_has and not seq_has:    # deletion
-            ops.append("D")
-        elif not ref_has and seq_has:    # insertion
-            ops.append("I")
-        # (gap,gap) never happens once started in a valid Stockholm alignment
-
-    if not ops:
-        return None, None
-    return collapse_ops(ops), pos
 
 def cigar_and_pos(ref_cols, seq_cols):
     """
@@ -123,7 +68,6 @@ def cigar_and_pos(ref_cols, seq_cols):
 
     return collapsed, pos
 
-
 def parse_orientation(sid):
     """
     Extract base ID and orientation from a Stockholm sequence ID.
@@ -156,7 +100,7 @@ def parse_orientation(sid):
 
 # ────────────────────────────────────────── tiny Stockholm parser ───
 def read_stockholm(path):
-    """Return (rf_align_string, {id: aligned_string})."""
+    """Return (rf_align_string, {id: aligned_string}, identifier)."""
     rf_parts = []
     seqs = {}
     identifier = "Unknown"
@@ -183,11 +127,13 @@ def read_stockholm(path):
     seqs = {sid: "".join(parts) for sid, parts in seqs.items()}
     return rf_align, seqs, identifier
 
-
 # ───────────────────────────────────────────── conversion driver ───
-def sto_to_sam(sto_path, sam_path="out.sam", ref_fa_path="ref.fa",
+def stk_to_sam(stk_path, sam_path="out.sam", ref_fa_path="ref.fa",
                ref_name="RF"):
-    rf_align, seqs, identifier = read_stockholm(sto_path)
+    """
+    Convert Stockholm MSA to SAM and reference FASTA.
+    """
+    rf_align, seqs, identifier = read_stockholm(stk_path)
     aln_len = len(rf_align)
 
     # reference FASTA
@@ -200,11 +146,11 @@ def sto_to_sam(sto_path, sam_path="out.sam", ref_fa_path="ref.fa",
     with open(sam_path, "w") as sam:
         sam.write("@HD\tVN:1.6\tSO:unknown\n")
         sam.write(f"@SQ\tSN:{identifier}\tLN:{len(ref_seq)}\n")
-        sam.write("@PG\tID:sto2sam_minimal\tPN:sto2sam_minimal\n")
+        sam.write("@PG\tID:stk_to_sam\tPN:stk_to_sam\n")
 
         for sid, aln in seqs.items():
             if len(aln) != aln_len:
-                sys.exit(f"ERROR: {sid} length {len(aln)} ≠ RF length {aln_len}")
+                raise ValueError(f"ERROR: {sid} length {len(aln)} ≠ RF length {aln_len}")
 
             cigar, pos = cigar_and_pos(rf_align, aln)
             if cigar is None:
@@ -213,7 +159,6 @@ def sto_to_sam(sto_path, sam_path="out.sam", ref_fa_path="ref.fa",
             cigar_str = "".join(f"{l}{op}" for op, l in cigar)
             seq_no_gaps = aln.translate({ord('.'): None, ord('-'): None})
 
-
             base_id, orient = parse_orientation(sid)
             flag = 16 if orient == '-' else 0  # Reverse strand flag if needed
             sam.write(
@@ -221,16 +166,23 @@ def sto_to_sam(sto_path, sam_path="out.sam", ref_fa_path="ref.fa",
                 f"{seq_no_gaps}\t*\n"
             )
 
-
-
 # ─────────────────────────────────────────────── entry point ───
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Convert Stockholm MSA to SAM and reference FASTA"
+    )
+    parser.add_argument("input", type=Path, help="Input Stockholm file")
+    parser.add_argument("--sam", type=Path, default="out.sam", help="Output SAM file")
+    parser.add_argument("--ref", type=Path, default="ref.fa", help="Output reference FASTA")
+    args = parser.parse_args()
+
+    stk_to_sam(args.input, args.sam, args.ref)
+    print("Wrote", args.ref, "and", args.sam)
+    print("Compress and index with:")
+    print(f"  samtools view -C --write-index -T {args.ref} -o out.cram {args.sam}")
+    print("  samtools index out.cram")
+
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit("Usage: sto2sam_minimal.py <input.sto>")
-    sto_to_sam(Path(sys.argv[1]))
-    print("Wrote ref.fa and out.sam\n"
-          "Compress and index with:\n"
-          "  samtools view -C --write-index -T ref.fa -o out.cram out.sam\n"
-          "  samtools index out.cram\n")
-
-
+    main()

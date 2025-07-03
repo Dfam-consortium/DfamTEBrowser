@@ -33,14 +33,38 @@ of custom tracks and data types.
 
 ## Installation
 
+The DfamTEBrowser has the following dependencies:
+
+- Python3 + Numpy 
+- RMBlast ( https://www.repeatmasker.org/rmblast/ )
+- Samtools ( https://www.htslib.org/ )
+- Dfam Reference Files
+    Dfam-curated.fa
+    RepeatPeps.lib
+
 ```bash
+pip3 install numpy
 git clone git@github.com:Dfam-consortium/DfamTEBrowser.git
 cd DfamTEBrowser
+cd Libraries
+wget https://www.dfam.org/releases/current/families/Dfam-RepeatMasker.lib.gz -o Dfam-curated.fa.gz
+wget https://www.dfam.org/releases/current/families/RepeatPeps.lib.gz -o RepeatPeps.lib.gz
+gunzip Dfam-curated.fa.gz
+gunzip RepeatPeps.lib.gz
+```
+
+[optional]
+If you want to rebuild the IGV.js javascript component, you will need to install Node.js and npm.
+The following commands will pull down the Dfam modified version of IGV.js and build the minified
+files from scratch.
+
+```bash
 git submodule init
 git submodule update
 cd igv.js
 npm install
 npm run build
+cp dist/igv.esm.min.js ../js/igv.esm.min.js
 ```
 
 ## Usage
@@ -49,18 +73,18 @@ Generate a DfamTEBrowser visualization using the `genTEBrowser.pl` script:
 
 ### From a consensus sequence:
 ```bash
-perl genTEBrowser.pl your_te_consensus.fasta [options]
+python3 genTEBrowser.py your_te_consensus.fasta [options]
 ```
 
 ### From a Stockholm alignment:
 ```bash
-perl genTEBrowser.pl your_te_alignment.stk [options]
+python3 genTEBrowser.py your_te_alignment.stk [options]
 ```
 
 ### Given a Dfam accession:
 Directly fetches the TE family data from the Dfam database using the provided accession number.
 ```bash
-perl genTEBrowser.pl DF000000001 [options]
+python3 genTEBrowser.py DF000000001 [options]
 ```
 
 ## Output
@@ -72,7 +96,7 @@ The tool generates web-based visualization files that can be opened in a browser
 DfamTEBrowser is built on:
 - **IGV.js** - Core genome browser functionality
 - **Custom tracks** - Specialized tracks for TE-specific data visualization
-- **Perl** - Backend processing and file generation
+- **Python** - Backend processing and file generation
 
 ## Use Cases
 
@@ -83,4 +107,6 @@ DfamTEBrowser is built on:
 
 ## License
 
-CC0 1.0 Universal
+DfamTEBrowser: CC0 1.0 Universal
+IGV.js:        The MIT License (MIT)
+
