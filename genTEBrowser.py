@@ -12,7 +12,7 @@ from pathlib import Path
 import requests
 import pprint
 
-sys.path.append('DfamLib')
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'DfamLib'))
 from MultAlign import MultAlign
 
 from stkToSam import stk_to_sam
@@ -275,10 +275,11 @@ def main():
         config.read(args.config)
 
     install_dir = os.path.dirname(os.path.abspath(__file__))
-    if not os.path.exists(os.path.join(install_dir, "DfamLib", "Dfam-curated.fa")):
+    print("INSTALL DIR ==", install_dir)
+    if not os.path.exists(os.path.join(install_dir, "Libraries", "Dfam-curated.fa")):
         print("Please finish installation of DfamTEBrowser by downloading the DfamLib/Dfam-curated.fa file (see README.md).")
         sys.exit(1)
-    if not os.path.exists(os.path.join(install_dir, "DfamLib", "RepeatPeps.lib")):
+    if not os.path.exists(os.path.join(install_dir, "Libraries", "RepeatPeps.lib")):
         print("Please finish installation of DfamTEBrowser by downloading the DfamLib/RepeatPeps.lib file (see README.md).")
         sys.exit(1)
 
