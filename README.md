@@ -71,6 +71,7 @@ files from scratch.
 git submodule init
 git submodule update
 cd igv.js
+git checkout teviz (for now)
 npm install
 npm run build
 cp dist/igv.esm.min.js ../js/igv.esm.min.js
