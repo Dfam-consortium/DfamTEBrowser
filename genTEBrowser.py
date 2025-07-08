@@ -60,7 +60,7 @@ def generate_cram_from_stockholm(stk_path, fasta_path, cram_path, crai_path, sam
             samtools_path, "index", cram_path
         ], check=True)
 
-        os.remove("tmpSeed.sam")
+        #os.remove("tmpSeed.sam")
         if os.path.exists(fasta_path + ".fai"):
             os.remove(fasta_path + ".fai")
 
