@@ -1,3 +1,4 @@
 [submodule "igv.js"]
 	path = igv.js
 	url = git@github.com:rmhubley/igv.js.git
+  branch = teviz

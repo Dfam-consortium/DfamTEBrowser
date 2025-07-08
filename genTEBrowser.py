@@ -222,6 +222,7 @@ def move_output_files(tmp_dir, output_dir, seq_id, base_url):
     files_to_move = [
         ("tmpBrowser.html", f"index.html"),
         ("tmpConsensus.fa", f"ref.fa"),
+        ("tmpSeed.sam", f"seed.sam"),
         ("tmpSeed.cram", f"seed.cram"),
         ("tmpSeed.cram.crai", f"seed.cram.crai"),
     ]

@@ -150,13 +150,16 @@ def feature_to_js(feature, seq_id, track_type=None):
 
 def cram_track_to_js(track):
     # Handles CRAM/CRAI ("alignment") track
+    #    "format: 'cram'," +
+    #    f"url: \"{html_escape(track['url'])}\"," +
+    #    f"indexURL: \"{html_escape(track['indexURL'])}\"," +
     return (
         "{" +
         f"name: \"{html_escape(track.get('name','Seed Alignment'))}\"," +
         "type: 'alignment'," +
-        "format: 'cram'," +
-        f"url: \"{html_escape(track['url'])}\"," +
-        f"indexURL: \"{html_escape(track['indexURL'])}\"," +
+        "format: 'dfamsam'," +
+        "url: 'seed.sam'," +
+        "sourceType: 'dfamsam'," +
         f"fastaURL: \"{html_escape(track['fastaURL'])}\"," +
         "displayMode: 'SQUISHED',"
         "autoHeight: true" +
