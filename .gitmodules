@@ -1,0 +1,3 @@
+[submodule "dfam_igv.js"]
+	path = dfam_igv.js
+	url = git@github.com:Dfam-consortium/dfam_igv.js.git

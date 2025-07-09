@@ -36,7 +36,10 @@ of custom tracks and data types.
 The DfamTEBrowser has the following dependencies:
 
 - Python3 + Numpy 
+  - pip3 install numpy
+  - pip3 install requests
 - RMBlast ( https://www.repeatmasker.org/rmblast/ )
+  -- you will have to run rmblast/bin/blastx and rmblast/bin/rmblastn once by hand in order to clear the security restrictions for these non-signed tools
 - Dfam Reference Files
     Dfam-curated.fa
     RepeatPeps.lib
@@ -48,6 +51,10 @@ cd DfamTEBrowser
 cd Libraries
 wget https://www.dfam.org/releases/current/families/Dfam-RepeatMasker.lib.gz -O Dfam-curated.fa.gz
 wget https://www.dfam.org/releases/current/families/RepeatPeps.lib.gz 
+or
+curl .. -o Dfam-curated.fa.gz
+curl .. -o RepeatPeps.lib.gz
+
 gunzip Dfam-curated.fa.gz
 gunzip RepeatPeps.lib.gz
 ```
@@ -60,8 +67,7 @@ files from scratch.
 ```bash
 git submodule init
 git submodule update
-cd igv.js
-git checkout teviz (for now)
+cd dfam_igv.js
 npm install
 npm run build
 cp dist/igv.esm.min.js ../js/igv.esm.min.js

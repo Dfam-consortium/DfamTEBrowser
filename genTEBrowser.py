@@ -449,8 +449,8 @@ def main():
             aln_track = {
                 "name": "Seed Alignment",
                 "type": "alignment",
-                "format": "dfamsam",
-                "sourceType": "dfamsam",
+                "format": "sam",
+                "sourceType": "sam",
                 "url": "seed.sam",
                 "displayMode": "SQUISHED",
                 "fastaURL": "ref.fa",
