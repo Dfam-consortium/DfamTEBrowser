@@ -59,6 +59,25 @@ gunzip Dfam-curated.fa.gz
 gunzip RepeatPeps.lib.gz
 ```
 
+MacOS Instructions
+
+MacOS includes Gatekeeper, a security feature that by default blocks applications that are not signed by an identified developer. If you've compiled an application by hand or downloaded one from an untrusted source, you may see errors like:
+```
+blastx cannot be opened because the developer cannot be verified.
+```
+
+To resolve this:
+1. Attempt to open the application by double-clicking on it in the Finder.  Click "Cancel" when the error dialog appears.  This step is necessary to register the app with Gatekeeper's exception list.
+2. Open System Settings -> Privacy & Security and scroll down the the security section.  You should see a message like "AppName was blocked from use because it is not from an identified developer.".  Click on the "Allow Anyway" button next to this message.
+or you can grant the equivalent permissions via the command line as:
+
+```bash
+xattr -d com.apple.quarantine /path/to/blastx
+chmod +x /path/to/blastx
+```
+
+You may need to do this with ultra, rmblastn, and blastx in order to fully run DfamTEBrowser.
+
 [optional]
 If you want to rebuild the IGV.js javascript component, you will need to install Node.js and npm.
 The following commands will pull down the Dfam modified version of IGV.js and build the minified
