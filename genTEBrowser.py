@@ -350,7 +350,7 @@ def main():
 
     matrix_dir = os.path.join(install_dir, "Matrices/ncbi/nt")
     rmblast_dir =     os.environ.get('RMBLAST_DIR') \
-                  or (config.get('tools', 'RMBLAST_DIR', fallback=None) if config else None) \
+                  or (config.get('tools', 'rmblast_dir', fallback=None) if config else None) \
                   or os.path.dirname(shutil.which('rmblastn')) if shutil.which('rmblastn') else None \
                   or "/usr/local/rmblast/bin"
     rmblastn = os.path.join(rmblast_dir,"rmblastn")
@@ -364,13 +364,18 @@ def main():
 
     output_dir = None
     if not args.output_dir:
-        users_home = os.path.expanduser("~")
-        if os.path.exists(os.path.join(users_home, "public_html")):
-            if not os.path.exists(os.path.join(users_home, "public_html", "DfamTEBrowser")):
-                os.makedirs(os.path.join(users_home, "public_html", "DfamTEBrowser"), exist_ok=True)
-            output_dir = os.path.join(users_home, "public_html", "DfamTEBrowser")
+        if config and config.get('paths', 'output_dir', fallback=None):
+            output_dir = config.get('paths', 'output_dir')
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
         else:
-            output_dir = "."
+            users_home = os.path.expanduser("~")
+            if os.path.exists(os.path.join(users_home, "public_html")):
+                if not os.path.exists(os.path.join(users_home, "public_html", "DfamTEBrowser")):
+                    os.makedirs(os.path.join(users_home, "public_html", "DfamTEBrowser"), exist_ok=True)
+                output_dir = os.path.join(users_home, "public_html", "DfamTEBrowser")
+            else:
+                output_dir = "."
     else:
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir, exist_ok=True)
@@ -485,10 +490,15 @@ def main():
 
         print(f"Output files saved to {os.path.abspath(output_dir)}\n")
 
-        if base_url.startswith("file://"):
-            html_file = file_mappings.get('tmpBrowser.html', {}).get('local_path')
-            if html_file:
-                print(f"Open in browser: file://{os.path.abspath(html_file)}\n")
+        #if base_url.startswith("file://"):
+        #    html_file = file_mappings.get('tmpBrowser.html', {}).get('local_path')
+        #    if html_file:
+        #        print(f"Open in browser: file://{os.path.abspath(html_file)}\n")
+        print("If the output directory is not already served by an existing webserver")
+        print("you can view your results by starting one in the output directory like so:")
+        print("   python3 -m http.server 8000 --directory ", output_dir)
+        print("Then open your browser and navigate to:")
+        print(f"   http://localhost:8000\n\n")
 
     finally:
         # Clean up temporary directory unless keep-temp is specified

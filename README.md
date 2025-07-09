@@ -101,6 +101,29 @@ DfamTEBrowser can be configured one of three ways (in priority order):
   3. Using a config file in INI format (specfied with -config <filename>)
   4. Using your PATH to automatically locate tools.
 
+A typical 'config.ini' file looks like this:
+
+```ini
+[tools]
+rmblast_dir = /usr/local/rmblast/bin
+ultra = /usr/local/ultra/ultra
+
+[paths]
+output_dir = /path/to/output
+```
+
+To use it, supply the path via the --config option:
+```bash
+./genTEBrowser.py myTE.stk --output-dir output --config /path/to/config.ini
+```
+
+or using environment variables:
+```bash
+export RMBLAST_DIR=/opt/rmblast/bin
+export ULTRA=/opt/ultra/ultra
+./genTEBrowser.py myTE.stk --output-dir output
+```
+
 ## Usage
 
 Generate a DfamTEBrowser visualization using the `genTEBrowser.pl` script:
