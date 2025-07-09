@@ -31,6 +31,9 @@ of custom tracks and data types.
 - **Flexible input formats**: Accepts both consensus sequences and Stockholm alignment files
 - **Web-based interface** built on IGV.js with custom TE-specific tracks
 
+Example of a high-level view of a putative LTR family 
+![high level view of LTR family](images/ex-1.png)
+
 ## Installation
 
 The DfamTEBrowser has the following dependencies:
