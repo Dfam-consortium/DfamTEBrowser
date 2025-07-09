@@ -164,22 +164,8 @@ python3 -m http.server 8000 --directory output
 ```
 Then open your browser to http://localhost:8000
 
-## Technology
-
-DfamTEBrowser is built on:
-- **IGV.js** - Core genome browser functionality
-- **Custom tracks** - Specialized tracks for TE-specific data visualization
-- **Python** - Backend processing and file generation
-
-## Use Cases
-
-- **Reference visualization**: Explore the structure and characteristics of TE families
-- **Family curation**: Validate and refine putative TE family classifications
-- **Comparative analysis**: Compare alignments and similarities across different TE families
-- **Research**: Investigate transposable element biology and evolution
-
 ## License
 
-DfamTEBrowser: CC0 1.0 Universal
-IGV.js:        The MIT License (MIT)
+- DfamTEBrowser: CC0 1.0 Universal
+- IGV.js:        The MIT License (MIT)
 
