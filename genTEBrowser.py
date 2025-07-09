@@ -48,7 +48,6 @@ Usage: ./genTEBrowser.py [--help]
     --config CONFIG       Path to config.ini file for tool locations
     --rmblast-dir RMBLAST_DIR
                           Path to rmblast directory
-    --samtools SAMTOOLS   Path to samtools binary
     --ultra ULTRA         Path to ultra binary
     --threads THREADS     Maximum number of threads to use
     --output-dir OUTPUT_DIR
@@ -126,44 +125,6 @@ def _get_tool_path(tool_name, env_var, config, cli_arg=None, default=''):
     if os.path.isfile(tool_path) and os.access(tool_path, os.X_OK):
         return tool_path
     raise ValueError(f"{tool_name} tool not found. Please use --{tool_name} command line option, set {env_var} environment variable or provide a config.ini file with the correct path.")
-
-## Deprecated
-def _generate_cram_from_stockholm(stk_path, fasta_path, cram_path, crai_path, samtools_path="samtools"):
-    """
-    Generate CRAM and CRAI files from Stockholm/SAM and reference FASTA.
-    """
-
-    stk_to_sam(stk_path, sam_path="tmpSeed.sam", ref_fa_path="tmpSeedCons.fa")
-
-    if not os.path.exists("tmpSeed.sam"):
-        print("No SAM file (tmpSeed.sam) found for CRAM generation.")
-        return False
-
-    if os.path.exists("tmpSeedCons.fa"):
-        os.remove("tmpSeedCons.fa")
-
-    try:
-        # Create CRAM
-        subprocess.run([
-            samtools_path, "view", "-C", "-T", fasta_path, "-o", cram_path, "tmpSeed.sam"
-        ], check=True)
-
-        # Create CRAI index
-        subprocess.run([
-            samtools_path, "index", cram_path
-        ], check=True)
-
-        #os.remove("tmpSeed.sam")
-        if os.path.exists(fasta_path + ".fai"):
-            os.remove(fasta_path + ".fai")
-
-        if os.path.exists(cram_path) and os.path.exists(crai_path):
-            print(f"Created CRAM: {cram_path} and CRAI: {crai_path}")
-            return True
-    except Exception as e:
-        print(f"Error generating CRAM: {e}")
-
-    return False
 
 def _download_stockholm(accession, out_file):
     url = f"https://www.dfam.org/api/families/{accession}/seed?format=stockholm"
