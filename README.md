@@ -35,26 +35,26 @@ of custom tracks and data types.
 
 The DfamTEBrowser has the following dependencies:
 
-- Python3 + Numpy 
-  - pip3 install numpy
-  - pip3 install requests
+- Python3 + Numpy + Requests
+    - `pip3 install numpy`
+    - `pip3 install requests`
 - RMBlast ( https://www.repeatmasker.org/rmblast/ )
-  -- NOTE: You may need to run rmblast/bin/blastx and rmblast/bin/rmblastn once by hand in order to clear the security restrictions for these non-signed tools (System Settings -> Privacy & Security -> Security -> Allow application
-- Dfam Reference Files
-    Dfam-curated.fa
-    RepeatPeps.lib
+    - download the binary release
+- ULTRA (https://github.com/TravisWheelerLab/ULTRA)
+    - download source release and follow instructions for building
+- Dfam Reference Files ( Dfam-curated.fa, RepeatPeps.lib )
 
 ```bash
-pip3 install numpy
 git clone git@github.com:Dfam-consortium/DfamTEBrowser.git
 cd DfamTEBrowser
 cd Libraries
+# get the libraries with wget or curl
 wget https://www.dfam.org/releases/current/families/Dfam-RepeatMasker.lib.gz -O Dfam-curated.fa.gz
 wget https://www.dfam.org/releases/current/families/RepeatPeps.lib.gz 
-or
-curl .. -o Dfam-curated.fa.gz
-curl .. -o RepeatPeps.lib.gz
-
+# or
+curl https://www.dfam.org/releases/current/families/Dfam-RepeatMasker.lib.gz -o Dfam-curated.fa.gz
+curl https://www.dfam.org/releases/current/families/RepeatPeps.lib.gz -o RepeatPeps.lib.gz
+# then
 gunzip Dfam-curated.fa.gz
 gunzip RepeatPeps.lib.gz
 ```
@@ -107,34 +107,38 @@ Generate a DfamTEBrowser visualization using the `genTEBrowser.pl` script:
 
 ### From a consensus sequence:
 ```bash
-python3 genTEBrowser.py your_te_consensus.fasta
+python3 genTEBrowser.py your_te_consensus.fasta --output-dir output
 ```
 
 ### From a Stockholm alignment:
 ```bash
-python3 genTEBrowser.py your_te_alignment.stk
+python3 genTEBrowser.py your_te_alignment.stk --output-dir output
 ```
 
 ### Given a Dfam accession:
 Directly fetches the TE family data from the Dfam database using the provided accession number.
 ```bash
-python3 genTEBrowser.py DF000000001 
-python3 genTEBrowser.py DR002283232
+python3 genTEBrowser.py DF000000001 --output-dir output
+python3 genTEBrowser.py DR002283232 --output-dir output
 ```
 
 ## Output
 
 The tool generates web-based visualization files that can be opened in a browser to explore the TE family characteristics interactively.
+These files include:
 
-## Mac OS Example
+  - index.html -- The primary HTML file
+  - ref.fa -- The reference sequence in FASTA format
+  - seed.sam -- The seed alignment in SAM format (if input contained a seed alignment)
+  - igv.esm.min.js -- The Dfam extended igv.js browser codebase
 
+The main html file loads data additional files and therefore needs CORs functionality.  It is easiest to either write files to
+a directory of an existing webserver, or simply start up one to exclusively serve the output directory like so:
 ```
 cd DfamTEBrowser
-mkdir output
 python3 genTEBrowser.py DR002283232 --output-dir output
 python3 -m http.server 8000 --directory output
 ```
-
 Then open your browser to http://localhost:8000
 
 ## Technology
