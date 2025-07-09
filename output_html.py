@@ -164,6 +164,7 @@ def build_track_js(tracks, seq_id):
             js = f"""{{
                 name: "{html_escape(track['name'])}",
                 type: '{track.get("type", "annotation")}',
+                labelColor: 'black',
                 displayMode: 'EXPANDED',
                 autoHeight: true,
                 features: [
