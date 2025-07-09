@@ -39,7 +39,7 @@ The DfamTEBrowser has the following dependencies:
   - pip3 install numpy
   - pip3 install requests
 - RMBlast ( https://www.repeatmasker.org/rmblast/ )
-  -- you will have to run rmblast/bin/blastx and rmblast/bin/rmblastn once by hand in order to clear the security restrictions for these non-signed tools
+  -- NOTE: You may need to run rmblast/bin/blastx and rmblast/bin/rmblastn once by hand in order to clear the security restrictions for these non-signed tools (System Settings -> Privacy & Security -> Security -> Allow application
 - Dfam Reference Files
     Dfam-curated.fa
     RepeatPeps.lib
@@ -106,6 +106,17 @@ python3 genTEBrowser.py DR002283232
 ## Output
 
 The tool generates web-based visualization files that can be opened in a browser to explore the TE family characteristics interactively.
+
+## Mac OS Example
+
+```
+cd DfamTEBrowser
+mkdir output
+python3 genTEBrowser.py DR002283232 --output-dir output
+python3 -m http.server 8000 --directory output
+```
+
+Then open your browser to http://localhost:8000
 
 ## Technology
 

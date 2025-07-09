@@ -119,6 +119,7 @@ def analyze_protein(query, db, blastx_path, threads=1):
     annots = assign_colors_by_subject(annots)
     return {
         "name": "TE Protein Homology",
+        "labelColor": "black",
         "type": "annotation",
         "features": annots,
     }
