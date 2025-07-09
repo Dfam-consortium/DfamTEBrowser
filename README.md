@@ -1,6 +1,7 @@
 # DfamTEBrowser
 
 Transposable Element Family Genome Browser
+![high level view of LTR family](images/ex1.png)
 
 ## Overview
 
@@ -29,10 +30,16 @@ of custom tracks and data types.
   - Seed alignment track (showin details of instance coverage to the consensus)
   - Protein similarity analysis
 - **Flexible input formats**: Accepts both consensus sequences and Stockholm alignment files
-- **Web-based interface** built on IGV.js with custom TE-specific tracks
+- **Web-based Zoomable Unser Interface** built on IGV.js with custom TE-specific tracks
+- **Generate Publication Ready Images** IGV.js supports generation of SVG or PNG snapshots
 
-Example of a high-level view of a putative LTR family 
-![high level view of LTR family](images/ex-1.png)
+#### Examples:
+
+Protein alignment details appear at higher zoom levels:\
+<img src="images/ex2.png" width="70%">
+
+Nucleotide alignment details appear at higher zoom levels:\
+<img src="images/ex3.png" width="70%">
 
 ## Installation
 
