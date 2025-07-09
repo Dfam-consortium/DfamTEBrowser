@@ -1,4 +1,91 @@
 #!/usr/bin/python3
+# -*- coding: utf-8 -*-
+"""
+Usage: ./genTEBrowser.py [--help]
+                         [--config config.ini]
+                         [--rmblast-dir /path/to/rmblast/]
+                         [--ultra /path/to/ultra]
+                         [--threads 8]
+                         [--output-dir /path/to/output/]
+                         [--base-url http://localhost:8000]
+                         [--igv-js-url /path/to/igv.esm.min.js]
+                         [--keep-temp]
+                         family_file or Dfam accession
+
+  Generate a web-based visualization tool for transposable element (TE)
+  families that treats the TE family consensus sequence as a reference
+  genome within a genome browser framework.
+
+  This tool generates a set of HTML and data files that can be opened
+  locally in a browser or served via a web server. The input may be
+  a TE family consensus sequence (single sequence FASTA file), a
+  TE family seed alignment (Stockholm format), or a valid Dfam accession.
+  In the later case, the tool will attempt to download the seed alignment
+  directly from Dfam.
+
+  Examples:
+
+    # Dfam accessions
+    ./genTEBrowser.py DF000000001
+    ./genTEBrowser.py DR002283232
+
+    # FASTA file
+    ./genTEBrowser.py myTE.fasta
+
+    # Stockholm file
+    ./genTEBrowser.py myTE.stk
+
+  The output will be saved in the current working directory by default,
+  although it is recommended that you pre-configure (e.g via a config.ini)
+  or set the "--output-dir" to a directory that will contain the complete
+  set of files generated.
+
+    ./genTEBrowser.py myTE.stk --output-dir /path/to/output/
+
+
+  Options:
+    -h, --help            show this help message and exit
+    --config CONFIG       Path to config.ini file for tool locations
+    --rmblast-dir RMBLAST_DIR
+                          Path to rmblast directory
+    --samtools SAMTOOLS   Path to samtools binary
+    --ultra ULTRA         Path to ultra binary
+    --threads THREADS     Maximum number of threads to use
+    --output-dir OUTPUT_DIR
+                          Output directory
+    --base-url BASE_URL   Base URL for serving files (e.g., http://localhost:8000 or file:///path/to/output)
+    --igv-js-url IGV_JS_URL
+                          IGV JS file URL/path
+    --keep-temp           Keep temporary directory for debugging
+
+SEE ALSO: related_script.py
+          Dfam: http://www.dfam.org
+
+AUTHOR(S):
+    Robert Hubley <rhubley@systemsbiology.org>
+
+LICENSE:
+    This code may be used in accordance with the Creative Commons
+    Zero ("CC0") public domain dedication:
+    https://creativecommons.org/publicdomain/zero/1.0/
+
+DISCLAIMER:
+  This software is provided ``AS IS'' and any express or implied
+  warranties, including, but not limited to, the implied warranties of
+  merchantability and fitness for a particular purpose, are disclaimed.
+  In no event shall the authors or the Dfam consortium members be
+  liable for any direct, indirect, incidental, special, exemplary, or
+  consequential damages (including, but not limited to, procurement of
+  substitute goods or services; loss of use, data, or profits; or
+  business interruption) however caused and on any theory of liability,
+  whether in contract, strict liability, or tort (including negligence
+  or otherwise) arising in any way out of the use of this software, even
+  if advised of the possibility of such damage.
+
+"""
+#
+# Module imports
+#
 import argparse
 import configparser
 import os
@@ -10,7 +97,6 @@ import tempfile
 import urllib.parse
 from pathlib import Path
 import requests
-import pprint
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'DfamLib'))
 from MultAlign import MultAlign
@@ -25,7 +111,13 @@ from analysis import (
 )
 from output_html import generate_html
 
-def get_tool_path(tool_name, env_var, config, cli_arg=None, default=''):
+def _usage():
+    """Print out docstring as program usage"""
+    # Call to help/pydoc with scriptname ( sans path and file extension )
+    help(os.path.splitext(os.path.basename(__file__))[0])
+    sys.exit(0)
+
+def _get_tool_path(tool_name, env_var, config, cli_arg=None, default=''):
     tool_path = cli_arg \
         or os.environ.get(env_var) \
         or (config.get('tools', tool_name, fallback=None) if config else None) \
@@ -35,7 +127,8 @@ def get_tool_path(tool_name, env_var, config, cli_arg=None, default=''):
         return tool_path
     raise ValueError(f"{tool_name} tool not found. Please use --{tool_name} command line option, set {env_var} environment variable or provide a config.ini file with the correct path.")
 
-def generate_cram_from_stockholm(stk_path, fasta_path, cram_path, crai_path, samtools_path="samtools"):
+## Deprecated
+def _generate_cram_from_stockholm(stk_path, fasta_path, cram_path, crai_path, samtools_path="samtools"):
     """
     Generate CRAM and CRAI files from Stockholm/SAM and reference FASTA.
     """
@@ -72,7 +165,7 @@ def generate_cram_from_stockholm(stk_path, fasta_path, cram_path, crai_path, sam
 
     return False
 
-def download_stockholm(accession, out_file):
+def _download_stockholm(accession, out_file):
     url = f"https://www.dfam.org/api/families/{accession}/seed?format=stockholm"
     print(f"  - Fetching {url} ...")
     response = requests.get(url)
@@ -80,7 +173,7 @@ def download_stockholm(accession, out_file):
     with open(out_file, "w") as fh:
         fh.write(response.text)
 
-def fix_stk_reference(stk_path):
+def _fix_stk_reference(stk_path):
     print("\n\n*********FIXING RF*************\n\n")
     tmp_fixed = stk_path + ".fixed"
     msa = MultAlign(
@@ -102,7 +195,7 @@ def fix_stk_reference(stk_path):
     shutil.move(tmp_fixed, stk_path)
 
 
-def parse_fasta(fasta_path):
+def _parse_fasta(fasta_path):
     seq_id, seq_desc, seq = None, "", []
     with open(fasta_path) as fh:
         for line in fh:
@@ -120,7 +213,7 @@ def parse_fasta(fasta_path):
         raise ValueError(f"FASTA file {fasta_path} does not contain a sequence record.")
     return seq_id, seq_desc, "".join(seq)
 
-def parse_stockholm(stk_path):
+def _parse_stockholm(stk_path):
     rf_found = False
     rf = ""
     acc = None
@@ -150,14 +243,14 @@ def parse_stockholm(stk_path):
     seq_desc = name if acc and name else ""
     return seq_id, seq_desc, rf
 
-def preprocess_input(input_arg, tmp_dir, samtools_path=None):
+def _preprocess_input(input_arg, tmp_dir):
     accession_re = re.compile(r"^D[FR]\d{9}(\.\d+)?$")
     filetype, seq_id, seq_desc, consensus, fasta_path, stk_path = None, None, None, None, None, None
 
     if accession_re.match(input_arg):
         print("Looks like a Dfam accession (DR######### or DF#########).")
         stk_path = os.path.join(tmp_dir, "tmpAnnotSeqDfamSeed.stk")
-        download_stockholm(input_arg, stk_path)
+        _download_stockholm(input_arg, stk_path)
         input_arg = stk_path
         filetype = "stockholm"
     elif os.path.isfile(input_arg):
@@ -172,33 +265,39 @@ def preprocess_input(input_arg, tmp_dir, samtools_path=None):
         if not filetype:
             raise ValueError(f"Could not autodetect file type of {input_arg} (no FASTA or STOCKHOLM header).")
     else:
-        raise ValueError(f"Input {input_arg} is neither a valid file nor a Dfam accession.")
+        raise ValueError(f"Input {input_arg} is neither a valid file nor a Dfam accession.  Dfam accessions\n" \
+                          "       should contain 9-digits (e.g DF000000001 or DR002283232).  If you meant to use a\n" \
+                          "       file, please provide a valid FASTA or STOCKHOLM file.")
 
     if filetype == "fasta":
-        seq_id, seq_desc, consensus = parse_fasta(input_arg)
+        seq_id, seq_desc, consensus = _parse_fasta(input_arg)
         fasta_path = input_arg
         stk_path = None
     elif filetype == "stockholm":
-        seq_id, seq_desc, rf = parse_stockholm(input_arg)
+        seq_id, seq_desc, rf = _parse_stockholm(input_arg)
         if rf and all(c in "xX" for c in rf):
-            fix_stk_reference(input_arg)
-            seq_id, seq_desc, rf = parse_stockholm(input_arg)
+            _fix_stk_reference(input_arg)
+            seq_id, seq_desc, rf = _parse_stockholm(input_arg)
         consensus = rf
         fasta_path = os.path.join(tmp_dir, "tmpConsensus.fa")
         with open(fasta_path, "w") as fh:
             fh.write(f">{seq_id}\n{rf}\n")
         stk_path = input_arg
 
-        # Generate CRAM files in temp directory
-        cram_path = os.path.join(tmp_dir, "tmpSeed.cram")
-        crai_path = os.path.join(tmp_dir, "tmpSeed.crai")
-        generate_cram_from_stockholm(stk_path, fasta_path, cram_path, crai_path, samtools_path)
+        stk_to_sam(stk_path, sam_path="tmpSeed.sam", ref_fa_path="tmpSamCons.fa")
+
+        if not os.path.exists("tmpSeed.sam"):
+            print("No SAM file (tmpSeed.sam) found for CRAM generation.")
+            return False
+
+        if os.path.exists("tmpSamCons.fa"):
+            os.remove("tmpSamCons.fa")
     else:
         raise ValueError(f"Unknown file type for {input_arg}")
 
     return filetype, seq_id, seq_desc, consensus, fasta_path, stk_path
 
-def get_base_url(output_dir, base_url_arg):
+def _get_base_url(output_dir, base_url_arg):
     """
     Determine the base URL for serving files.
     Priority: CLI arg > file:// URL for absolute path > relative path assumption
@@ -209,7 +308,7 @@ def get_base_url(output_dir, base_url_arg):
     abs_output_dir = os.path.abspath(output_dir)
     return f"file://{abs_output_dir}"
 
-def move_output_files(tmp_dir, output_dir, seq_id, base_url):
+def _move_output_files(tmp_dir, output_dir, seq_id, base_url):
     """
     Move generated files from temp directory to output directory and update track URLs.
     Returns updated file mappings for track URL updates.
@@ -223,8 +322,6 @@ def move_output_files(tmp_dir, output_dir, seq_id, base_url):
         ("tmpBrowser.html", f"index.html"),
         ("tmpConsensus.fa", f"ref.fa"),
         ("tmpSeed.sam", f"seed.sam"),
-        ("tmpSeed.cram", f"seed.cram"),
-        ("tmpSeed.cram.crai", f"seed.cram.crai"),
     ]
 
     for temp_name, output_name in files_to_move:
@@ -240,28 +337,35 @@ def move_output_files(tmp_dir, output_dir, seq_id, base_url):
 
     return file_mappings
 
-def update_track_urls(tracks, file_mappings, base_url):
-    """
-    Update track URLs to point to the final output location.
-    """
-    for track in tracks:
-        if track.get("type") == "alignment":
-            # Update CRAM track URLs
-            if "tmpSeed.cram" in file_mappings:
-                track["url"] = file_mappings["tmpSeed.cram"]["url"]
-            if "tmpSeed.cram.crai" in file_mappings:
-                track["indexURL"] = file_mappings["tmpSeed.cram.crai"]["url"]
-            if "tmpConsensus.fa" in file_mappings:
-                track["fastaURL"] = file_mappings["tmpConsensus.fa"]["url"]
-
 def main():
-    parser = argparse.ArgumentParser(
-        description="GenTEBrowser Py: Generate Dfam TE Browser Input"
-    )
+    #
+    # Options processing
+    #
+    #   There are two ways to document usage/command line
+    #   arguments using this boilerplate.  The intended way
+    #   is to document using docstrings at the top of the
+    #   script.  This way the pydoc docs match the output
+    #   produced by '-h' or '--help' using the argparse
+    #   custom action class ( _CustomUsageAction ) defined
+    #   below.  If you want the paired-down argparse default
+    #   instead simply remove the "add_help=False" argument
+    #   to the argparse constructor below and comment out
+    #   the add_argment('-h', ...) line below.
+    #
+    class _CustomUsageAction(argparse.Action):
+        def __init__(self, option_strings, dest, default=False, required=False, help=None):
+            super(_CustomUsageAction, self).__init__(
+                      option_strings=option_strings, dest=dest,
+                      nargs=0, const=True, default=default,
+                      required=required, help=help)
+        def __call__(self, parser, args, values, option_string=None):
+            _usage()
+
+    parser = argparse.ArgumentParser( add_help=False )
+    parser.add_argument('-h', '--help', action=_CustomUsageAction )
     parser.add_argument("input", help="Sequence file or Dfam accession (DF#########)")
     parser.add_argument("--config", help="Path to config.ini file for tool locations", default=None)
     parser.add_argument("--rmblast-dir", help="Path to rmblast directory", default=None)
-    parser.add_argument("--samtools", help="Path to samtools binary", default=None)
     parser.add_argument("--ultra", help="Path to ultra binary", default=None)
     parser.add_argument("--threads", help="Maximum number of threads to use", default=8)
     parser.add_argument("--output-dir", help="Output directory", default=None)
@@ -276,7 +380,6 @@ def main():
         config.read(args.config)
 
     install_dir = os.path.dirname(os.path.abspath(__file__))
-    print("INSTALL DIR ==", install_dir)
     if not os.path.exists(os.path.join(install_dir, "Libraries", "Dfam-curated.fa")):
         print("Please finish installation of DfamTEBrowser by downloading the DfamLib/Dfam-curated.fa file (see README.md).")
         sys.exit(1)
@@ -295,8 +398,7 @@ def main():
     if not os.path.exists(rmblastn) or not os.path.exists(makeblastdb) or not os.path.exists(blastx):
         print("RMBLAST tools not found. Please use -rmblast-dir command line option, set RMBLAST_DIR environment variable or provide a config.ini file with the correct paths.")
         sys.exit(1)
-    samtools_path = get_tool_path("samtools", "SAMTOOLS", config, cli_arg=args.samtools, default="/usr/local/samtools/bin/samtools")
-    ultra_prgm = get_tool_path("ultra", "ULTRA", config, cli_arg=args.ultra, default="/usr/local/ultra/ultra")
+    ultra_prgm = _get_tool_path("ultra", "ULTRA", config, cli_arg=args.ultra, default="/usr/local/ultra/ultra")
 
 
     output_dir = None
@@ -325,11 +427,10 @@ def main():
         print(f"#   Temporary Directory: {tmpdir}")
         print(f"#   Output Directory   : {output_dir}")
         print(f"#   RMBlast            : {rmblast_dir}")
-        print(f"#   Samtools           : {samtools_path}")
         print(f"#   Ultra              : {ultra_prgm}")
 
         try:
-            filetype, seq_id, seq_desc, consensus, fasta_path, stk_path = preprocess_input(args.input, tmpdir, samtools_path)
+            filetype, seq_id, seq_desc, consensus, fasta_path, stk_path = _preprocess_input(args.input, tmpdir)
             print("Filetype:", filetype)
             print("Sequence ID:", seq_id)
             #print("#   Description :", seq_desc)
@@ -342,22 +443,20 @@ def main():
 
         tracks = []
 
-        # Check for CRAM files in temp directory
-        cram_path = os.path.join(tmpdir, "tmpSeed.cram")
-        crai_path = os.path.join(tmpdir, "tmpSeed.cram.crai")
-
-        if os.path.exists(cram_path) and os.path.exists(crai_path):
-            cram_track = {
+        # If we have a seed alignment build alignment track
+        sam_path = os.path.join(tmpdir, "tmpSeed.sam")
+        if os.path.exists(sam_path):
+            aln_track = {
                 "name": "Seed Alignment",
                 "type": "alignment",
-                "format": "cram",
-                "url": "seed.cram",
-                "indexURL": "seed.cram.crai",
+                "format": "dfamsam",
+                "sourceType": "dfamsam",
+                "url": "seed.sam",
                 "displayMode": "SQUISHED",
                 "fastaURL": "ref.fa",
                 "autoHeight": True,
             }
-            tracks.insert(0, cram_track)
+            tracks.insert(0, aln_track)
 
         ultra_track = analyze_ultra(fasta_path, ultra_prgm, args.threads)
         if ultra_track and ultra_track.get("features"):
@@ -400,10 +499,9 @@ def main():
         if protein_track and protein_track.get("features"):
             if len(protein_track["features"]) > 0:
                 tracks.append(protein_track)
-        #pprint.pprint(protein_track)
 
         # Determine base URL for serving files
-        base_url = get_base_url(output_dir, args.base_url)
+        base_url = _get_base_url(output_dir, args.base_url)
 
         print("Generating HTML output...")
         generate_html(
@@ -418,7 +516,7 @@ def main():
         os.chdir(original_dir)
 
         # Move files to output directory
-        file_mappings = move_output_files(tmpdir, output_dir, seq_id, base_url)
+        file_mappings = _move_output_files(tmpdir, output_dir, seq_id, base_url)
         # Copy minified IGV JS file to output directory
         igv_js_src = os.path.join(install_dir, "js", "igv.esm.min.js")
         igv_js_dest = os.path.join(output_dir, "igv.esm.min.js")

@@ -148,30 +148,17 @@ def feature_to_js(feature, seq_id, track_type=None):
         js += " }"
     return js
 
-def cram_track_to_js(track):
-    # Handles CRAM/CRAI ("alignment") track
-    #    "format: 'cram'," +
-    #    f"url: \"{html_escape(track['url'])}\"," +
-    #    f"indexURL: \"{html_escape(track['indexURL'])}\"," +
-    return (
-        "{" +
-        f"name: \"{html_escape(track.get('name','Seed Alignment'))}\"," +
-        "type: 'alignment'," +
-        "format: 'dfamsam'," +
-        "url: 'seed.sam'," +
-        "sourceType: 'dfamsam'," +
-        f"fastaURL: \"{html_escape(track['fastaURL'])}\"," +
-        "displayMode: 'SQUISHED',"
-        "autoHeight: true" +
-        "}"
-    )
-
 def build_track_js(tracks, seq_id):
     track_js_pieces = []
     for track in tracks:
-        if track.get('type') == "alignment" and track.get('format') == "cram":
-            # This is the CRAM track
-            track_js_pieces.append(cram_track_to_js(track))
+        if track.get('type') == "alignment":
+            # Just assume that the track definition is already complete
+            lines = ['{']
+            for i, (k, v) in enumerate(track.items()):
+                comma = ',' if i < len(track) - 1 else ''
+                lines.append(f'  "{k}": "{v}"{comma}')
+            lines.append('}')
+            track_js_pieces.append('\n'.join(lines))
         else:
             features_js = ",\n".join(feature_to_js(f, seq_id, track.get('type')) for f in track['features'])
             js = f"""{{
@@ -188,11 +175,11 @@ def build_track_js(tracks, seq_id):
 
 def get_ref_fasta_url(tracks, default="ref.fa"):
     """
-    If a CRAM track is present, use its fastaURL for reference.
+    If alignment track is present, use its fastaURL for reference.
     Otherwise, return the default.
     """
     for track in tracks:
-        if track.get('type') == "alignment" and track.get('format') == "cram":
+        if track.get('type') == "alignment":
             return html_escape(track.get('fastaURL', default))
     return html_escape(default)
 

@@ -1,18 +1,66 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-stkToSam.py
-==================
-Convert a Stockholm multiple-sequence alignment (MSA) to a SAM file and ungapped reference FASTA, *without any external libraries*.
+    stkToSam.py
+
+    Usage:
+        ./stkToSam.py [--help]
+                      --input=aln.stk
+                      [--sam=out.sam]
+                      [--ref=ref.fa]
+
+    Convert a Stockholm multiple-sequence alignment (MSA) to a SAM file and
+    ungapped reference FASTA file. This tool requires that the Stockholm
+    file provides the reference annotation (#=GC RF line).
+
+    The resulting SAM file may be compressed and indexed with samtools.
+
+    Args:
+        -h, --help       : Show this help message and exit
+        --input          : Input Stockholm file
+        --sam            : Output SAM file (default: out.sam)
+        --ref            : Output reference FASTA file (default: ref.fa)
+
+    SEE ALSO:
+        samtools: https://www.htslib.org
+        Dfam:     http://www.dfam.org
+
+    AUTHOR(S):
+        Robert Hubley <rhubley@systemsbiology.org>
+
+    LICENSE:
+        This code may be used in accordance with the Creative Commons
+        Zero ("CC0") public domain dedication:
+        https://creativecommons.org/publicdomain/zero/1.0/
+
+    DISCLAIMER:
+        This software is provided “AS IS” and any express or implied
+        warranties, including, but not limited to, the implied warranties of
+        merchantability and fitness for a particular purpose, are disclaimed.
+        In no event shall the authors or the Dfam consortium members be
+        liable for any direct, indirect, incidental, special, exemplary, or
+        consequential damages (including, but not limited to, procurement of
+        substitute goods or services; loss of use, data, or profits; or
+        business interruption) however caused and on any theory of liability,
+        whether in contract, strict liability, or tort (including negligence
+        or otherwise) arising in any way out of the use of this software, even
+        if advised of the possibility of such damage.
 """
 
 import sys
+import os
+import argparse
 from pathlib import Path
 import textwrap
 import re
 
 coord_re = re.compile(r"^(\d+)-(\d+)(?:_([+-]))?$")
 
-# ───────────────────────────────────────────────────────── helpers ───
+def _usage():
+    """Print out docstring as program usage"""
+    help(os.path.splitext(os.path.basename(__file__))[0])
+    sys.exit(0)
+
 def collapse_ops(ops):
     """Turn ['M','M','I',…] into [('M',2), ('I',1)…]."""
     if not ops:
@@ -33,7 +81,7 @@ def cigar_and_pos(ref_cols, seq_cols):
     `pos` is 1‑based for SAM.
     """
     ops = []
-    ref_coord = 0          # running count of reference bases seen (0-based)
+    ref_coord = 0
     started = False
     pos = None
 
@@ -46,22 +94,20 @@ def cigar_and_pos(ref_cols, seq_cols):
 
         if not started:
             if not seq_has:
-                continue  # Still in leading gap region
+                continue
             started = True
             pos = ref_coord if ref_has else ref_coord + 1
 
-        # Emit CIGAR op starting from first aligned base
         if ref_has and seq_has:
-            ops.append("M")  # Match/mismatch
+            ops.append("M")
         elif ref_has and not seq_has:
-            ops.append("D")  # Deletion
+            ops.append("D")
         elif not ref_has and seq_has:
-            ops.append("I")  # Insertion
+            ops.append("I")
 
     if not ops:
-        return None, None  # Entire sequence is gaps
+        return None, None
 
-    # Collapse and remove trailing D ops
     collapsed = collapse_ops(ops)
     while collapsed and collapsed[-1][0] == "D":
         collapsed.pop()
@@ -85,7 +131,6 @@ def parse_orientation(sid):
 
     match = coord_re.match(coord_part)
     if not match:
-        # Not a recognized coordinate/orient pattern; treat as pure ID
         return sid, '+'
 
     start, end, orient = match.groups()
@@ -95,10 +140,8 @@ def parse_orientation(sid):
     if orient in ('+', '-'):
         return base, orient
     else:
-        # Infer from start and end
         return base, '+' if end >= start else '-'
 
-# ────────────────────────────────────────── tiny Stockholm parser ───
 def read_stockholm(path):
     """Return (rf_align_string, {id: aligned_string}, identifier)."""
     rf_parts = []
@@ -127,7 +170,6 @@ def read_stockholm(path):
     seqs = {sid: "".join(parts) for sid, parts in seqs.items()}
     return rf_align, seqs, identifier
 
-# ───────────────────────────────────────────── conversion driver ───
 def stk_to_sam(stk_path, sam_path="out.sam", ref_fa_path="ref.fa",
                ref_name="RF"):
     """
@@ -136,7 +178,6 @@ def stk_to_sam(stk_path, sam_path="out.sam", ref_fa_path="ref.fa",
     rf_align, seqs, identifier = read_stockholm(stk_path)
     aln_len = len(rf_align)
 
-    # reference FASTA
     ref_seq = "".join(c for c in rf_align if c not in ".-")
     with open(ref_fa_path, "w") as fh:
         fh.write(f">{identifier}\n")
@@ -154,26 +195,31 @@ def stk_to_sam(stk_path, sam_path="out.sam", ref_fa_path="ref.fa",
 
             cigar, pos = cigar_and_pos(rf_align, aln)
             if cigar is None:
-                continue                      # row is all gaps
+                continue
 
             cigar_str = "".join(f"{l}{op}" for op, l in cigar)
             seq_no_gaps = aln.translate({ord('.'): None, ord('-'): None})
-
             base_id, orient = parse_orientation(sid)
-            flag = 16 if orient == '-' else 0  # Reverse strand flag if needed
+            flag = 16 if orient == '-' else 0
+
             sam.write(
                 f"{base_id}\t{flag}\t{identifier}\t{pos}\t0\t{cigar_str}\t*\t0\t0\t"
                 f"{seq_no_gaps}\t*\n"
             )
 
-# ─────────────────────────────────────────────── entry point ───
-def main():
-    import argparse
+def main(*args):
+    class _CustomUsageAction(argparse.Action):
+        def __init__(self, option_strings, dest, default=False, required=False, help=None):
+            super(_CustomUsageAction, self).__init__(
+                option_strings=option_strings, dest=dest,
+                nargs=0, const=True, default=default,
+                required=required, help=help)
+        def __call__(self, parser, args, values, option_string=None):
+            _usage()
 
-    parser = argparse.ArgumentParser(
-        description="Convert Stockholm MSA to SAM and reference FASTA"
-    )
-    parser.add_argument("input", type=Path, help="Input Stockholm file")
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-h", "--help", action=_CustomUsageAction)
+    parser.add_argument("--input", type=Path, required=True, help="Input Stockholm file")
     parser.add_argument("--sam", type=Path, default="out.sam", help="Output SAM file")
     parser.add_argument("--ref", type=Path, default="ref.fa", help="Output reference FASTA")
     args = parser.parse_args()
@@ -184,5 +230,6 @@ def main():
     print(f"  samtools view -C --write-index -T {args.ref} -o out.cram {args.sam}")
     print("  samtools index out.cram")
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    main(*sys.argv)
+

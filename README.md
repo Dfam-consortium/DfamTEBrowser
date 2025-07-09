@@ -37,16 +37,6 @@ The DfamTEBrowser has the following dependencies:
 
 - Python3 + Numpy 
 - RMBlast ( https://www.repeatmasker.org/rmblast/ )
-- Samtools ( https://www.htslib.org/ )
-   * from source:
-```bash
-cd samtools-1.x    # and similarly for bcftools and htslib
-./configure --prefix=/where/to/install
-make
-make install
-```
-or using conda/homebrew
-
 - Dfam Reference Files
     Dfam-curated.fa
     RepeatPeps.lib
@@ -92,18 +82,19 @@ Generate a DfamTEBrowser visualization using the `genTEBrowser.pl` script:
 
 ### From a consensus sequence:
 ```bash
-python3 genTEBrowser.py your_te_consensus.fasta [options]
+python3 genTEBrowser.py your_te_consensus.fasta
 ```
 
 ### From a Stockholm alignment:
 ```bash
-python3 genTEBrowser.py your_te_alignment.stk [options]
+python3 genTEBrowser.py your_te_alignment.stk
 ```
 
 ### Given a Dfam accession:
 Directly fetches the TE family data from the Dfam database using the provided accession number.
 ```bash
-python3 genTEBrowser.py DF000000001 [options]
+python3 genTEBrowser.py DF000000001 
+python3 genTEBrowser.py DR002283232
 ```
 
 ## Output
