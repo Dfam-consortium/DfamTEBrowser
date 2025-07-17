@@ -21,9 +21,10 @@ def run_rmblastn(query, subject=None, db=None, rmblastn_path="rmblastn", params=
     if params is None:
         # self alignment uses subject=None
         mask_level = 101 if subject else 80
+        word_size = 7 if subject else 14
         params = (
           f"-num_alignments 9999999 -gapopen 20 -gapextend 5 "
-          f"-mask_level {mask_level} -complexity_adjust -word_size 14 "
+          f"-mask_level {mask_level} -complexity_adjust -word_size {word_size} "
           "-xdrop_ungap 400 -xdrop_gap_final 200 -xdrop_gap 100 "
           "-min_raw_gapped_score 200 -dust no "
           "-outfmt \"6 score perc_sub perc_query_gap perc_db_gap qseqid qstart qend qlen sstrand "
@@ -183,7 +184,13 @@ def parse_blastn_output(output, type_):
         cons_start = int(d[10])
         cons_end = int(d[11])
         cons_len = int(d[12])
-        orient = '-' if d[8] and d[8] == 'minus' else '+'
+        # NOTE: NCBI blast switches to descending order when orientation is "minus".
+        #       We should correct that here.
+        if d[8] and d[8] == 'minus':
+            orient = '-'
+            cons_start, cons_end = cons_end, cons_start
+        else:
+            orient = '+'
         name = d[9] or 'self'
         ref_seq = d[18]
         cons_seq = d[19]
