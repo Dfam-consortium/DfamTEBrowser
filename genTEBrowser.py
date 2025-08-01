@@ -384,10 +384,6 @@ def main():
     try:
         # Create a real temporary directory
         tmpdir = tempfile.mkdtemp(prefix="gentebrowser_")
-        # Change to temp directory for processing
-        original_dir = os.getcwd()
-        os.chdir(tmpdir)
-
         print("#\n# genTEBrowser :  Generate Dfam TE Visualization\n#")
         print(f"#   Input              : {args.input}")
         print(f"#   Temporary Directory: {tmpdir}")
@@ -395,8 +391,16 @@ def main():
         print(f"#   RMBlast            : {rmblast_dir}")
         print(f"#   Ultra              : {ultra_prgm}")
 
+        input_val = args.input
+        if os.path.isfile(input_val):
+            input_val = os.path.abspath(input_val)
+
+        # Change to temp directory for processing
+        original_dir = os.getcwd()
+        os.chdir(tmpdir)
+
         try:
-            filetype, seq_id, seq_desc, consensus, fasta_path, stk_path = _preprocess_input(args.input, tmpdir)
+            filetype, seq_id, seq_desc, consensus, fasta_path, stk_path = _preprocess_input(input_val, tmpdir)
             print("Filetype:", filetype)
             print("Sequence ID:", seq_id)
             #print("#   Description :", seq_desc)
@@ -414,7 +418,7 @@ def main():
         if os.path.exists(sam_path):
             aln_track = {
                 "name": "Seed Alignment",
-                "type": "alignment",
+                "type": "seedalign",
                 "format": "sam",
                 "sourceType": "sam",
                 "url": "seed.sam",

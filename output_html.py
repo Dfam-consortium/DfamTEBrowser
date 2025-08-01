@@ -27,6 +27,9 @@ HTML_TEMPLATE = Template("""
         const options = {
             reference: { fastaURL: "$ref_fasta_url", indexed: false },
             locus: ["$seq_id"],
+            showCenterGuideButton: false,
+            showMultiSelectButton: false,
+            cursorLabelPosition: "crosshair",
             tracks: [
 $track_js
             ]
@@ -109,6 +112,7 @@ def feature_to_js(feature, seq_id, track_type=None):
         js = ("{ chr: \"" + html_escape(seq_id) + "\""
               + f", start: {feature['ref_start']-1}, end: {feature['ref_end']}"
               + f", name: \"{html_escape(feature.get('name',''))}\""
+              + (f", score: {feature['score']}" if 'score' in feature else "")
               + f", color: \"{html_escape(feature.get('color','gray'))}\""
               + f", strand: \"{html_escape(feature.get('orient','+'))}\""
               + (f", ostart: {feature['ostart']}" if 'ostart' in feature else "")
@@ -151,7 +155,7 @@ def feature_to_js(feature, seq_id, track_type=None):
 def build_track_js(tracks, seq_id):
     track_js_pieces = []
     for track in tracks:
-        if track.get('type') == "alignment":
+        if track.get('type') == "seedalign":
             # Just assume that the track definition is already complete
             lines = ['{']
             for i, (k, v) in enumerate(track.items()):
@@ -167,6 +171,7 @@ def build_track_js(tracks, seq_id):
                 labelColor: 'black',
                 displayMode: 'EXPANDED',
                 autoHeight: true,
+                maxHeight: 10000,
                 features: [
 {features_js}
                 ]
@@ -180,7 +185,7 @@ def get_ref_fasta_url(tracks, default="ref.fa"):
     Otherwise, return the default.
     """
     for track in tracks:
-        if track.get('type') == "alignment":
+        if track.get('type') == "seedalign":
             return html_escape(track.get('fastaURL', default))
     return html_escape(default)
 

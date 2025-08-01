@@ -107,7 +107,6 @@ def chain_alignments(annotations, max_gap=100, max_overlap=20):
     sorted_ann = sorted(annotations, key=lambda a: (a['name'], a['orient'], a['ref_start']))
     chains = []
     current_chain = None
-
     for ann in sorted_ann:
         if (not current_chain or
             current_chain['name'] != ann['name'] or
@@ -127,6 +126,7 @@ def chain_alignments(annotations, max_gap=100, max_overlap=20):
              (ann['ref_start'] <= current_chain['last_ref_end'] and ann['cons_start'] <= current_chain['last_cons_end']))
         )
         if colinear:
+            current_chain['score'] += ann['score']
             current_chain['ref_end'] = ann['ref_end']
             current_chain['last_ref_end'] = ann['ref_end']
             current_chain['last_cons_end'] = ann['cons_end']
@@ -156,6 +156,7 @@ def start_new_chain(ann):
     cigar = compute_cigar(seq, oseq) if seq and oseq else ''
     return {
         'name': ann['name'],
+        'score': ann['score'],
         'orient': ann['orient'],
         'color': ann.get('color', 'gray'),
         'ref_start': ann['ref_start'],

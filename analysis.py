@@ -20,8 +20,10 @@ def run_rmblastn(query, subject=None, db=None, rmblastn_path="rmblastn", params=
         raise ValueError("Either subject or db must be provided.")
     if params is None:
         # self alignment uses subject=None
-        mask_level = 101 if subject else 80
-        word_size = 7 if subject else 14
+        #mask_level = 101 if subject else 80
+        mask_level = 101
+        #word_size = 7 if subject else 14
+        word_size = 7
         params = (
           f"-num_alignments 9999999 -gapopen 20 -gapextend 5 "
           f"-mask_level {mask_level} -complexity_adjust -word_size {word_size} "
@@ -59,7 +61,7 @@ def run_blastx(query, db, blastx_path="blastx", threads=1):
     """
     outfmt = (
         "6 evalue perc_sub perc_query_gap perc_db_gap qseqid qstart qend qlen "
-        "sstrand sseqid sstart send slen qframe sseq"
+        "sstrand sseqid sstart send slen qframe sseq qseq"
     )
     cmd = [
         blastx_path,
@@ -95,7 +97,7 @@ def analyze_self(query, rmblastn_path, matrix_dir, threads=1):
 def analyze_repeat(query, db, rmblastn_path, matrix_dir, threads=1):
     output = run_rmblastn(query=query, db=db, rmblastn_path=rmblastn_path, matrix_dir=matrix_dir, threads=threads)
     annots = parse_blastn_output(output, "repeat")
-    annots = apply_depth_limit(annots, "repeat")
+    annots = apply_depth_limit(annots, "repeat", max_depth=10)
     chains = chain_alignments(annots)
     # Assign color to chains directly (chain-level coloring)
     from colors import DISTINCT_COLORS
@@ -221,7 +223,7 @@ def parse_blastx_output(blastx_lines, type_="protein"):
         if not line.strip() or line.startswith("#"):
             continue
         fields = line.rstrip("\n").split("\t")
-        if len(fields) < 15:
+        if len(fields) < 16:
             continue
 
         # Assign fields according to your outfmt
@@ -234,7 +236,8 @@ def parse_blastx_output(blastx_lines, type_="protein"):
         sstart = int(fields[10])
         send = int(fields[11])
         slen = int(fields[12])
-        oseq = fields[14]
+        oseq = fields[14] # sseq
+        seq = fields[15]  # qseq
 
         # Standardize coordinates: always ref_start <= ref_end
         if qstart <= qend:
@@ -254,6 +257,10 @@ def parse_blastx_output(blastx_lines, type_="protein"):
         except Exception:
             score = 0
 
+        # The visualization doesn't handle insertions (relative to the reference) 
+        # as of yet, so we need to filter them out.
+        filtered_oseq = ''.join(o for s, o in zip(seq, oseq) if s != '-')
+
         annots.append({
             'ref_start': ref_start,
             'ref_end': ref_end,
@@ -265,7 +272,7 @@ def parse_blastx_output(blastx_lines, type_="protein"):
             'score': score,
             'ref_seq': qseqid,
             'cons_seq': sseqid,
-            'oseq': oseq,
+            'oseq': filtered_oseq,
             'type': type_,
         })
     return annots
